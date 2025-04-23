@@ -37,11 +37,21 @@ class ConfigManager:
             Dictionary of default configuration values
         """
         return {
-            # Data settings
+            # Data default settings
+            # 'data': {
+            #     'regions': ['US', 'BR', 'JP'],
+            #     'data_dir': 'data',
+            #     'cache_dir': 'cached_features',
+            #     'use_cached': True,
+            #     'test_size': 0.2,
+            #     'random_state': 42
+            # },
+
+            # Data Ember settings
             'data': {
-                'regions': ['US', 'BR', 'JP'],
-                'data_dir': 'data',
-                'cache_dir': 'cached_features',
+                'regions': ['US', 'EU', 'JP'],
+                'data_dir': 'ember_data',
+                'cache_dir': 'ember_cached_features',
                 'use_cached': True,
                 'test_size': 0.2,
                 'random_state': 42

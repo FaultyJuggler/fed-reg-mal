@@ -5,6 +5,7 @@ from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 
+from data.feature_extractor import EmberFeatureAdapter
 from data.feature_extractor import PEFeatureExtractor
 
 
@@ -29,7 +30,8 @@ class MalwareDataset:
         self.test_size = test_size
         self.random_state = random_state
 
-        self.feature_extractor = PEFeatureExtractor(max_features=max_features)
+        # self.feature_extractor = PEFeatureExtractor(max_features=max_features)
+        self.feature_extractor = EmberFeatureAdapter(max_features=max_features)
         self.feature_names = None
 
         self.X = {}

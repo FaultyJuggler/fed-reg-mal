@@ -7,6 +7,110 @@ import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 
+class EmberFeatureAdapter:
+    """
+    Adapter for EMBER pre-extracted features to work with your project's pipeline.
+    """
+
+    def __init__(self, max_features=1000):
+        """
+        Initialize the EMBER feature adapter.
+
+        Args:
+            max_features: Maximum number of features to use
+        """
+        self.max_features = max_features
+        self.feature_names = None
+        self.fitted = False
+
+    def extract_features_from_file(self, file_path):
+        """
+        Load pre-extracted features from EMBER NPZ file.
+
+        Args:
+            file_path: Path to NPZ file with features
+
+        Returns:
+            Tuple of (categorical_features, textual_features)
+        """
+        # Load NPZ file
+        data = np.load(file_path)
+        features = data['features']
+
+        # Split features into categorical and numerical parts for compatibility
+        # with your existing pipeline
+        categorical_features = {}
+
+        # Map EMBER features to categorical format expected by your code
+        for i in range(min(len(features), self.max_features)):
+            feature_name = f"ember_feature_{i}"
+            categorical_features[feature_name] = features[i]
+
+        # Return empty string for textual features (not used with EMBER)
+        return categorical_features, ""
+
+    def fit_transform(self, file_paths):
+        """
+        Fit and transform EMBER features.
+
+        Args:
+            file_paths: List of paths to NPZ files
+
+        Returns:
+            Feature matrix (X)
+        """
+        # Initialize feature matrix
+        X = np.zeros((len(file_paths), self.max_features))
+
+        # Load features from each file
+        for i, file_path in enumerate(file_paths):
+            categorical_features, _ = self.extract_features_from_file(file_path)
+
+            # Map features to matrix
+            for j, (feature_name, value) in enumerate(categorical_features.items()):
+                if j < self.max_features:
+                    X[i, j] = value
+
+        # Generate feature names
+        self.feature_names = [f"ember_feature_{i}" for i in range(self.max_features)]
+        self.fitted = True
+
+        return X
+
+    def transform(self, file_paths):
+        """
+        Transform EMBER features.
+
+        Args:
+            file_paths: List of paths to NPZ files
+
+        Returns:
+            Feature matrix (X)
+        """
+        if not self.fitted:
+            raise ValueError("Feature adapter must be fitted before transform")
+
+        # Initialize feature matrix
+        X = np.zeros((len(file_paths), self.max_features))
+
+        # Load features from each file
+        for i, file_path in enumerate(file_paths):
+            categorical_features, _ = self.extract_features_from_file(file_path)
+
+            # Map features to matrix
+            for j, (feature_name, value) in enumerate(categorical_features.items()):
+                if j < self.max_features:
+                    X[i, j] = value
+
+        return X
+
+    def get_feature_names(self):
+        """Get names of features."""
+        if not self.fitted:
+            raise ValueError("Feature adapter must be fitted before getting feature names")
+
+        return self.feature_names
+
 class PEFeatureExtractor:
     """
     Extract features from PE files for malware classification.
