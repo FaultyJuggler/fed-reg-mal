@@ -201,8 +201,16 @@ class FederatedServer:
         all_feature_subset_sizes = []
 
         for client_id, model in self.client_models.items():
-            all_trees.extend(model.estimators_)
-            all_feature_subset_sizes.extend(model.feature_subset_sizes_)
+            # Check if this is an accelerated model wrapper
+            if hasattr(model, 'model') and model.model is not None:
+                # Access the inner model's estimators
+                inner_model = model.model
+                all_trees.extend(inner_model.estimators_)
+                all_feature_subset_sizes.extend(inner_model.feature_subset_sizes_)
+            else:
+                # Regular model, access estimators directly
+                all_trees.extend(model.estimators_)
+                all_feature_subset_sizes.extend(model.feature_subset_sizes_)
 
         if not all_trees:
             raise ValueError("No trees to aggregate")
@@ -213,7 +221,8 @@ class FederatedServer:
 
         # Determine the number of trees for the global model
         # Get the max number of trees from any client
-        max_trees = max(len(model.estimators_) for model in self.client_models.values())
+        max_trees = max(len(model.estimators_ if not hasattr(model, 'model') else model.model.estimators_)
+                        for model in self.client_models.values())
 
         # Select subset of trees to include
         selected_trees = []
