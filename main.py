@@ -40,6 +40,10 @@ def parse_args():
     parser.add_argument('--ember-data', action='store_true', help='Use EMBER dataset for experiments')
     parser.add_argument('--ember-dir', type=str, default='/ember_data', help='Directory containing EMBER data')
 
+    # Add the max-samples argument
+    parser.add_argument('--max-samples', type=int, default=None,
+                        help='Maximum total samples to use for training (per region for EMBER data)')
+
     # Data directories
     parser.add_argument('--data-dir', type=str, required=True, help='Directory containing the datasets')
     parser.add_argument('--output-dir', type=str, default='results', help='Directory to save results')
@@ -158,7 +162,7 @@ def main():
         if args.ember_data:
             print("\n=== Running EMBER Federated Learning Experiment ===")
             from experiments.ember_federated import EmberFederatedExperiment
-            experiment = EmberFederatedExperiment(args.ember_dir, output_dir, hw_config=hw_config)
+            experiment = EmberFederatedExperiment(args.ember_dir, output_dir, hw_config=hw_config, max_samples=args.max_samples)
             # experiment will handle its own interrupts
             results = experiment.run(n_trees=args.n_trees, federated_features=800)
 

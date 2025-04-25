@@ -36,7 +36,7 @@ class EmberDataset(MalwareDataset):
         self.feature_names = None
         self.is_loaded = False
 
-    def load_data(self, data_dir, test_size=0.2, random_state=42):
+    def load_data(self, data_dir, test_size=0.2, random_state=42, max_samples=None):
         """
         Load EMBER data from pickle files for each region and mix benign samples with each region.
 
@@ -44,6 +44,7 @@ class EmberDataset(MalwareDataset):
             data_dir: Directory containing the EMBER data
             test_size: Proportion of data to use for testing
             random_state: Random seed for reproducibility
+            max_samples: Maximum number of samples to use per region (limits both malware and benign)
 
         Returns:
             self
@@ -56,6 +57,8 @@ class EmberDataset(MalwareDataset):
                 print(f"Note: Using relative path instead: {data_dir}")
 
         print(f"Loading EMBER data from {data_dir}...")
+        if max_samples:
+            print(f"Sample limit applied: using max {max_samples} samples per region (malware + benign combined)")
 
         # Track feature counts for information
         feature_counts = {}
@@ -69,7 +72,23 @@ class EmberDataset(MalwareDataset):
             x_benign_path = os.path.join(benign_dir, "X_train.pkl")
             if os.path.exists(x_benign_path):
                 with open(x_benign_path, 'rb') as f:
-                    X_benign = pickle.load(f)
+                    X_benign_full = pickle.load(f)
+
+                    # Limit benign samples if needed - we'll use half of max_samples
+                    # since we want to balance malware and benign
+                    if max_samples and len(X_benign_full) > (max_samples // 2):
+                        from sklearn.utils import resample
+                        benign_limit = max_samples // 2
+                        print(f"  Limiting benign samples from {len(X_benign_full)} to {benign_limit}")
+                        indices = resample(
+                            np.arange(len(X_benign_full)),
+                            n_samples=benign_limit,
+                            replace=False,
+                            random_state=random_state
+                        )
+                        X_benign = X_benign_full[indices]
+                    else:
+                        X_benign = X_benign_full
             else:
                 print(f"Warning: X_train.pkl not found in {benign_dir}")
                 X_benign = None
@@ -78,7 +97,18 @@ class EmberDataset(MalwareDataset):
             y_benign_path = os.path.join(benign_dir, "y_train.pkl")
             if os.path.exists(y_benign_path):
                 with open(y_benign_path, 'rb') as f:
-                    y_benign = pickle.load(f)
+                    y_benign_full = pickle.load(f)
+
+                    # Apply the same limit to labels
+                    if max_samples and X_benign is not None and len(X_benign) < len(y_benign_full):
+                        if hasattr(X_benign, 'indices'):
+                            indices = X_benign.indices
+                            y_benign = y_benign_full[indices]
+                        else:
+                            # Just take the first n labels corresponding to our filtered X data
+                            y_benign = y_benign_full[:len(X_benign)]
+                    else:
+                        y_benign = y_benign_full
             else:
                 print(f"Warning: y_train.pkl not found in {benign_dir}")
                 y_benign = None
@@ -105,7 +135,22 @@ class EmberDataset(MalwareDataset):
                 x_train_path = os.path.join(region_dir, "X_train.pkl")
                 if os.path.exists(x_train_path):
                     with open(x_train_path, 'rb') as f:
-                        X_malware = pickle.load(f)
+                        X_malware_full = pickle.load(f)
+
+                        # Apply limit for malware samples - we'll use half of max_samples
+                        if max_samples and len(X_malware_full) > (max_samples // 2):
+                            from sklearn.utils import resample
+                            malware_limit = max_samples // 2
+                            print(f"  Limiting {region} malware samples from {len(X_malware_full)} to {malware_limit}")
+                            indices = resample(
+                                np.arange(len(X_malware_full)),
+                                n_samples=malware_limit,
+                                replace=False,
+                                random_state=random_state
+                            )
+                            X_malware = X_malware_full[indices]
+                        else:
+                            X_malware = X_malware_full
                 else:
                     print(f"Warning: X_train.pkl not found in {region_dir}")
                     continue
@@ -114,7 +159,18 @@ class EmberDataset(MalwareDataset):
                 y_train_path = os.path.join(region_dir, "y_train.pkl")
                 if os.path.exists(y_train_path):
                     with open(y_train_path, 'rb') as f:
-                        y_malware = pickle.load(f)
+                        y_malware_full = pickle.load(f)
+
+                        # Apply the same limit to labels
+                        if max_samples and len(X_malware) < len(y_malware_full):
+                            if hasattr(X_malware, 'indices'):
+                                indices = X_malware.indices
+                                y_malware = y_malware_full[indices]
+                            else:
+                                # Just take the first n labels corresponding to our filtered X data
+                                y_malware = y_malware_full[:len(X_malware)]
+                        else:
+                            y_malware = y_malware_full
                 else:
                     print(f"Warning: y_train.pkl not found in {region_dir}")
                     continue
@@ -129,6 +185,7 @@ class EmberDataset(MalwareDataset):
                     X_benign, y_benign = benign_data
 
                     # Determine how many benign samples to use (same as malware count)
+                    # but don't exceed what we have available
                     n_malware = len(X_malware)
                     n_benign = min(n_malware, len(X_benign))
 
@@ -152,11 +209,14 @@ class EmberDataset(MalwareDataset):
                     y = np.concatenate([y_malware, y_benign_sampled])
 
                     print(
-                        f"  Combined {region} data: {len(X_malware)} malware + {len(X_benign_sampled)} benign = {len(X)} total")
+                        f"  Combined {region} data: {len(X_malware)} malware + {len(X_benign_sampled)} benign = {len(X)} total samples")
                 else:
                     X = X_malware
                     y = y_malware
                     print(f"  No benign data available. Using only {len(X)} malware samples for {region}.")
+
+                # Use a smaller test set when applying sample limits
+                test_samples = min(2000, int(len(X) * test_size)) if max_samples else int(len(X) * test_size)
 
                 # Split into train/test sets
                 from sklearn.model_selection import train_test_split
@@ -165,9 +225,18 @@ class EmberDataset(MalwareDataset):
                 # Shuffle to mix malware and benign
                 X, y = shuffle(X, y, random_state=random_state)
 
-                X_train, X_test, y_train, y_test = train_test_split(
-                    X, y, test_size=test_size, random_state=random_state, stratify=y
-                )
+                # Use specific test sample counts when max_samples is set
+                if max_samples:
+                    # Test set size shouldn't be more than 2,000 samples when limiting
+                    test_size_actual = test_samples / len(X)
+                    X_train, X_test, y_train, y_test = train_test_split(
+                        X, y, test_size=test_size_actual, random_state=random_state, stratify=y
+                    )
+                    print(f"  Using smaller test set: {len(X_test)} samples (instead of {int(len(X) * test_size)})")
+                else:
+                    X_train, X_test, y_train, y_test = train_test_split(
+                        X, y, test_size=test_size, random_state=random_state, stratify=y
+                    )
 
                 # Store the data
                 self.X["train"][region] = X_train
@@ -189,16 +258,25 @@ class EmberDataset(MalwareDataset):
             X_benign, y_benign = benign_data
             from sklearn.model_selection import train_test_split
 
-            X_train_benign, X_test_benign, y_train_benign, y_test_benign = train_test_split(
-                X_benign, y_benign, test_size=test_size, random_state=random_state, stratify=y_benign
-            )
+            # Use smaller test set for benign too when limiting
+            if max_samples:
+                test_samples = min(2000, int(len(X_benign) * test_size))
+                test_size_actual = test_samples / len(X_benign)
+                X_train_benign, X_test_benign, y_train_benign, y_test_benign = train_test_split(
+                    X_benign, y_benign, test_size=test_size_actual, random_state=random_state, stratify=y_benign
+                )
+            else:
+                X_train_benign, X_test_benign, y_train_benign, y_test_benign = train_test_split(
+                    X_benign, y_benign, test_size=test_size, random_state=random_state, stratify=y_benign
+                )
 
             self.X["train"]["benign"] = X_train_benign
             self.X["test"]["benign"] = X_test_benign
             self.y["train"]["benign"] = y_train_benign
             self.y["test"]["benign"] = y_test_benign
 
-            print(f"  Also stored original benign data for reference")
+            print(
+                f"  Also stored original benign data for reference ({len(X_train_benign)} train, {len(X_test_benign)} test)")
 
         # Check if we loaded any data
         if not self.X["train"]:

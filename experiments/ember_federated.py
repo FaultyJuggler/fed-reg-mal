@@ -22,7 +22,7 @@ class EmberFederatedExperiment:
     Implements the paper's federated learning approach for cross-regional detection.
     """
 
-    def __init__(self, data_dir, output_dir, hw_config=None):
+    def __init__(self, data_dir, output_dir, hw_config=None, max_samples=None):
         """
         Initialize the experiment.
 
@@ -33,6 +33,7 @@ class EmberFederatedExperiment:
         """
         self.data_dir = data_dir
         self.output_dir = output_dir
+        self.max_samples = max_samples
 
         # Detect hardware if not provided
         self.hw_config = hw_config if hw_config is not None else detect_hardware()
@@ -132,7 +133,7 @@ class EmberFederatedExperiment:
             self.current_stage = "loading_dataset"
             print(f"Loading EMBER dataset from {self.data_dir}...")
             dataset = EmberDataset()
-            dataset.load_data(self.data_dir)
+            dataset.load_data(self.data_dir, max_samples=self.max_samples)
             print(f"Dataset loaded successfully with regions: {dataset.regions}")
 
             # Initialize clients and server

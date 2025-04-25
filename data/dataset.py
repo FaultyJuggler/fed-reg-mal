@@ -43,7 +43,7 @@ class MalwareDataset:
             self.y[split] = {}
             self.file_paths[split] = {}
 
-    def load_data(self, data_dir, load_cached=True, cache_dir='cached_features'):
+    def load_data(self, data_dir, load_cached=True, cache_dir='cached_features', max_samples=None):
         """
         Load malware and goodware samples for all regions.
 
@@ -51,12 +51,16 @@ class MalwareDataset:
             data_dir: Directory containing the data
             load_cached: Whether to load cached features if available
             cache_dir: Directory to store cached features
+            max_samples: Maximum number of samples to use per region
 
         Returns:
             self
         """
         # Create cache directory if it doesn't exist
         os.makedirs(cache_dir, exist_ok=True)
+
+        if max_samples:
+            print(f"Sample limit applied: using max {max_samples} samples per region")
 
         # Load each region's data
         for region in self.regions:
@@ -69,6 +73,37 @@ class MalwareDataset:
                 X = data['X']
                 y = data['y']
                 file_paths = data['file_paths']
+
+                # Apply sample limit if needed
+                if max_samples and len(X) > max_samples:
+                    from sklearn.utils import resample
+                    print(f"  Limiting {region} samples from {len(X)} to {max_samples}")
+                    # Ensure we keep a balanced dataset
+                    pos_indices = np.where(y == 1)[0]
+                    neg_indices = np.where(y == 0)[0]
+
+                    pos_limit = max_samples // 2
+                    neg_limit = max_samples // 2
+
+                    # If we don't have enough of one class, use what we have and take more of the other
+                    if len(pos_indices) < pos_limit:
+                        pos_limit = len(pos_indices)
+                        neg_limit = max_samples - pos_limit
+                    elif len(neg_indices) < neg_limit:
+                        neg_limit = len(neg_indices)
+                        pos_limit = max_samples - neg_limit
+
+                    # Sample from each class
+                    pos_sample = resample(pos_indices, n_samples=pos_limit, replace=False,
+                                          random_state=self.random_state)
+                    neg_sample = resample(neg_indices, n_samples=neg_limit, replace=False,
+                                          random_state=self.random_state)
+
+                    # Combine indices and filter data
+                    indices = np.concatenate([pos_sample, neg_sample])
+                    X = X[indices]
+                    y = y[indices]
+                    file_paths = [file_paths[i] for i in indices]
             else:
                 # Load and process files
                 print(f"Processing files for {region}...")
@@ -80,8 +115,24 @@ class MalwareDataset:
                 malware_paths = self._get_file_paths(malware_dir)
                 goodware_paths = self._get_file_paths(goodware_dir)
 
-                # Balance dataset by taking same number of goodware as malware
-                goodware_paths = goodware_paths[:len(malware_paths)]
+                # Apply sample limit if needed
+                if max_samples:
+                    from sklearn.utils import resample
+                    malware_limit = min(len(malware_paths), max_samples // 2)
+                    goodware_limit = min(len(goodware_paths), max_samples // 2)
+
+                    if len(malware_paths) > malware_limit:
+                        print(f"  Limiting {region} malware samples from {len(malware_paths)} to {malware_limit}")
+                        malware_paths = resample(malware_paths, n_samples=malware_limit,
+                                                 replace=False, random_state=self.random_state)
+
+                    if len(goodware_paths) > goodware_limit:
+                        print(f"  Limiting goodware samples from {len(goodware_paths)} to {goodware_limit}")
+                        goodware_paths = resample(goodware_paths, n_samples=goodware_limit,
+                                                  replace=False, random_state=self.random_state)
+                else:
+                    # Balance dataset by taking same number of goodware as malware
+                    goodware_paths = goodware_paths[:len(malware_paths)]
 
                 # Combine file paths and create labels
                 file_paths = malware_paths + goodware_paths
@@ -99,10 +150,6 @@ class MalwareDataset:
                     y=y,
                     file_paths=file_paths
                 )
-
-            # Store feature names
-            if self.feature_names is None:
-                self.feature_names = self.feature_extractor.get_feature_names()
 
             # Split data into train and test sets
             X_train, X_test, y_train, y_test, paths_train, paths_test = train_test_split(
