@@ -186,7 +186,95 @@ If you use this implementation in your research, please cite the original paper:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
+## Acknowledgments and Reference Resources
 
-- Thanks to Marcus Botacin and Heitor Gomes for their research and insights
-- Special thanks to the RAID 2024 conference for publishing this important work
+- Thanks to Marcus Botacin and Heitor Gomes for their research and insights, especially Marcus for email support
+
+Below is a list of resources that were used as reference code
+
+## Malware Analysis & Feature Extraction
+
+- **EMBER (Endgame Malware BEnchmark for Research)**: A labeled benchmark dataset with extracted features from PE files
+  - Repository: [https://github.com/endgameinc/ember](https://github.com/endgameinc/ember)
+  - Used as reference for PE file feature extraction techniques
+
+- **MalwareDetection**: Example of malware detection using machine learning
+  - Repository: [https://github.com/marcoramilli/MalwareTrainingSets](https://github.com/marcoramilli/MalwareTrainingSets)
+  - Source for feature types and extraction methods
+
+- **PE-Malware-Machine-Learning**: Malware classification with static analysis
+  - Repository: [https://github.com/rieck/malware-classification](https://github.com/rieck/malware-classification)
+  - Reference for static feature extraction from PE files
+
+## Machine Learning & Federated Learning
+
+- **River**: Python library for online/incremental machine learning
+  - Repository: [https://github.com/online-ml/river](https://github.com/online-ml/river)
+  - Reference for adaptive random forest implementation
+
+- **Scikit-learn**: Core machine learning library
+  - Repository: [https://github.com/scikit-learn/scikit-learn](https://github.com/scikit-learn/scikit-learn)
+  - Source for classifier implementations and model evaluation techniques
+
+- **Flower**: Federated learning framework
+  - Repository: [https://github.com/adap/flower](https://github.com/adap/flower)
+  - Reference for federated learning communication protocols
+
+- **PySyft**: Library for secure and private federated learning
+  - Repository: [https://github.com/OpenMined/PySyft](https://github.com/OpenMined/PySyft)
+  - Reference for federated learning implementation patterns
+
+## Model Distillation
+
+- **Knowledge Distillation**: Implementation examples
+  - Repository: [https://github.com/pytorch/examples/tree/main/imagenet](https://github.com/pytorch/examples/tree/main/imagenet)
+  - Reference for teacher-student model implementations
+
+- **Model Compression Library**: Techniques for reducing model size
+  - Repository: [https://github.com/NervanaSystems/distiller](https://github.com/NervanaSystems/distiller)
+  - Reference for model compression techniques
+
+## YARA Rule Generation
+
+- **YaraGenerator**: Automatic YARA rule generation
+  - Repository: [https://github.com/Xen0ph0n/YaraGenerator](https://github.com/Xen0ph0n/YaraGenerator)
+  - Reference for converting features to YARA rules
+
+- **yarGen**: Generation of YARA rules from malware samples
+  - Repository: [https://github.com/Neo23x0/yarGen](https://github.com/Neo23x0/yarGen)
+  - Reference for rule generation approach
+
+## Visualization & Evaluation
+
+- **Scikit-learn-visualization-examples**: Examples of visualization for ML
+  - Repository: [https://github.com/scikit-learn/scikit-learn/tree/main/examples/visualization](https://github.com/scikit-learn/scikit-learn/tree/main/examples/visualization)
+  - Reference for machine learning visualization techniques
+
+- **Dash**: Framework for building analytical web applications
+  - Repository: [https://github.com/plotly/dash](https://github.com/plotly/dash)
+  - Reference for dashboard creation approaches
+
+## Concept Drift Detection
+
+- **Concept Drift Detection with MOA**: Examples and implementations
+  - Repository: [https://github.com/Waikato/moa](https://github.com/Waikato/moa)
+  - Reference for EDDM (Early Drift Detection Method) implementation
+
+- **Concept Drift in Machine Learning**: Examples of drift detection
+  - Repository: [https://github.com/alipsgh/tornado](https://github.com/alipsgh/tornado)
+  - Reference for approaches to handling concept drift in malware detection
+
+## Academic References
+
+- "Cross-Regional Malware Detection via Model Distilling and Federated Learning" by Marcus Botacin and Heitor Gomes
+  - Primary reference for the system architecture and experimental methodology
+
+- "TESSERACT: Eliminating Experimental Bias in Malware Classification across Space and Time" by Pendlebury et al.
+  - Reference for temporal evaluation approaches
+
+- "Transcending TRANSCEND: Revisiting Malware Classification in the Presence of Concept Drift" by Barbero et al.
+  - Reference for concept drift handling in malware classification
+
+These resources provided valuable examples, patterns, and techniques that helped shape the implementation of the cross-regional malware detection system.
+
+

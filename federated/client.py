@@ -58,13 +58,23 @@ class FederatedClient:
             raise ValueError("Client has no data. Call set_data() first.")
 
         if reset or not self.is_trained:
-            # Create a new model instance if needed
-            if isinstance(self.model, HeterogeneousRandomForest):
-                # Keep the same model type and parameters
-                self.model = clone(self.model)
+            # Check if the model is an accelerated model wrapper
+            if hasattr(self.model, 'model') and self.model.model is not None:
+                # Already have an accelerated model, use it directly
+                print(f"Using existing accelerated model for training")
+                self.model.fit(self.X_train, self.y_train)
+            elif hasattr(self.model, 'estimators_'):
+                # Already have a regular HeterogeneousRandomForest model
+                print(f"Using existing model for training")
+                self.model.fit(self.X_train, self.y_train)
             else:
-                # Use default model
+                # No model exists yet, create a new one
+                # Note: This should never happen if clients are created properly with models
+                print("WARNING: Creating new HeterogeneousRandomForest model with default parameters")
+                print("This is likely not what you want - models should be provided at client initialization")
+                from models.adaptive_rf import HeterogeneousRandomForest
                 self.model = HeterogeneousRandomForest()
+                self.model.fit(self.X_train, self.y_train)
 
         # Train the model
         self.model.fit(self.X_train, self.y_train)
