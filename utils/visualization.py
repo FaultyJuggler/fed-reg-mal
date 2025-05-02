@@ -31,7 +31,7 @@ class VisualizationManager:
         # Define region-specific colors
         self.region_colors = {
             'US': '#1f77b4',  # Blue
-            'BR': '#2ca02c',  # Green
+            'EU': '#2ca02c',  # Green
             'JP': '#d62728',  # Red
             'Global': '#9467bd',  # Purple
         }

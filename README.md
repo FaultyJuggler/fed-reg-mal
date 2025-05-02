@@ -27,8 +27,8 @@ This implementation recreates the experiments from the paper to verify and exten
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/malware-federated-distill.git
-cd malware-federated-distill
+git clone https://github.com/FaultyJuggler/fed-reg-mal.git
+cd fed-reg-mal
 
 # Create a virtual environment
 python -m venv venv
