@@ -69,9 +69,7 @@ class FederatedClient:
                 self.model.fit(self.X_train, self.y_train)
             else:
                 # No model exists yet, create a new one
-                # Note: This should never happen if clients are created properly with models
                 print("WARNING: Creating new HeterogeneousRandomForest model with default parameters")
-                print("This is likely not what you want - models should be provided at client initialization")
                 from models.adaptive_rf import HeterogeneousRandomForest
                 self.model = HeterogeneousRandomForest()
                 self.model.fit(self.X_train, self.y_train)

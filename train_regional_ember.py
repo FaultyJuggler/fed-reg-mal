@@ -116,7 +116,6 @@ def train_model(X, y, test_size=0.2, random_state=42):
     # Setup timeout handler
     def timeout_handler(signum, frame):
         print("WARNING: Training operation timed out after 3600 seconds!")
-        print("This could indicate a hanging process. Consider reducing dataset size.")
         # Don't exit, just warn
 
     # Set the timeout handler

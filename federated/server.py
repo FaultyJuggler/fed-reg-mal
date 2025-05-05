@@ -121,8 +121,6 @@ class FederatedServer:
             global_tree = deepcopy(trees[0])
 
             # Average the tree parameters
-            # This would require complex tree structure reconciliation in practice
-            # For simplicity, we'll use a simplified approach
             self.global_model.estimators_.append(global_tree)
 
     def _aggregate_by_weighted_averaging(self):
